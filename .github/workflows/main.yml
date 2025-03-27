@@ -21,7 +21,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim
-      
+
+      - name: Install dependencies
+        run: |
+          brew install libimobiledevice usbmuxd libplist
+          echo "Setting environment variables for library paths..."
+          echo "LIBRARY_PATH=/usr/local/opt/libimobiledevice/lib:/usr/local/opt/libusbmuxd/lib:/usr/local/opt/libplist/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CPATH=/usr/local/opt/libimobiledevice/include:/usr/local/opt/libusbmuxd/include:/usr/local/opt/libplist/include:$CPATH" >> $GITHUB_ENV
+
       - name: Install cargo-lipo and cargo-xcode
         run: |
           cargo install cargo-lipo
@@ -31,7 +38,7 @@ jobs:
         run: |
           cargo xcode
           cargo lipo --release
-          
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
