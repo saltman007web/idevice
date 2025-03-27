@@ -1,0 +1,39 @@
+name: Build idevice for iOS
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build for iOS
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, x86_64-apple-ios, aarch64-apple-ios-sim
+      
+      - name: Install cargo-lipo and cargo-xcode
+        run: |
+          cargo install cargo-lipo
+          cargo install cargo-xcode
+
+      - name: Build for iOS
+        run: |
+          cargo xcode
+          cargo lipo --release
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: idevice-ios
+          path: target/universal/release/libidevice.a
