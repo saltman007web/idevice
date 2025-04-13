@@ -45,6 +45,12 @@ jobs:
       - name: Install Rust Target Dependencies
         run: rustup target add ${{ matrix.target }}
 
+      # Step 4.1: Install system dependencies
+      - name: Install Dependencies
+        run: |
+             sudo apt-get update
+             sudo apt-get install -y libplist-dev
+
       # Step 5: Build the project
       - name: Build Project
         run: cargo build --release --target=${{ matrix.target }}
@@ -77,5 +83,12 @@ jobs:
       # Step 3: Deploy the application
       - name: Deploy Application
         run: |
-          echo "Deploying the application..."
-          # Add deployment commands here, e.g., scp, rsync, or cloud provider CLI commands
+         echo: GCP Github Action
+         - name: v1.0.1
+           uses: convictional/gcp-github-action@v1.0.1
+           with:
+         application_credentials: # optional
+         project_id: # optional
+         commands: # optional
+         command: # optional
+          
