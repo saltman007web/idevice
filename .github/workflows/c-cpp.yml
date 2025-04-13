@@ -28,7 +28,6 @@ jobs:
     - name: Configure for iOS
       run: |
         ./configure --host=arm64-apple-darwin --enable-ios 
-    # Adjust flags as needed
 
     # Step 4: Build the project
     - name: Build Project
@@ -58,8 +57,7 @@ jobs:
       with:
         name: ios-build-artifacts
         path: idevice/.github/workflows/
-    # Adjust the path if necessary
-
+    
     # Step 3: Deploy the application
     - name: Deploy Application
       run: |
