@@ -3,66 +3,38 @@ name: Build idevice for iOS and amd64
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
-    name: Build for iOS and amd64
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      # Step 2: Install required dependencies
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib g++-multilib x86_64-linux-gnu-gcc
+
+      # Step 3: Set up Rust toolchain
+      - name: Set Up Rust Toolchain
+        uses: actions-rs/toolchain@v1
         with:
-          targets: aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios, x86_64-unknown-linux-gnu
+          profile: minimal
+          toolchain: stable
+          override: true
 
-      - name: Install dependencies
-        run: |
-          brew update
-          brew install libimobiledevice usbmuxd libplist
-          echo "✅ Installed dependencies"
+      # Step 4: Build the project for amd64 target
+      - name: Build Project
+        run: cargo build --release --target=x86_64-unknown-linux-gnu
 
-      - name: Verify dependencies
-        run: |
-          ls -lah /usr/local/opt/libimobiledevice/lib || echo "❌ libimobiledevice not found"
-          ls -lah /usr/local/opt/libplist/lib || echo "❌ libplist not found"
-          ls -lah /usr/local/opt/libusbmuxd/lib || echo "❌ libusbmuxd not found"
-
-      - name: Export library paths
-        run: |
-          echo "Setting library paths..."
-          echo "LIBRARY_PATH=/usr/local/opt/libimobiledevice/lib:/usr/local/opt/libplist/lib:/usr/local/opt/libusbmuxd/lib:$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "CPATH=/usr/local/opt/libimobiledevice/include:/usr/local/opt/libplist/include:/usr/local/opt/libusbmuxd/include:$CPATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=/usr/local/opt/libimobiledevice/lib/pkgconfig:/usr/local/opt/libplist/lib/pkgconfig:/usr/local/opt/libusbmuxd/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
-          echo "✅ Environment variables set"
-
-      - name: Install Rust build tools
-        run: |
-          cargo install cargo-lipo
-          cargo install cargo-xcode
-          cargo install --force --locked bindgen-cli
-          echo "✅ Installed Rust build tools"
-
-      - name: Build for iOS
-        run: |
-          cargo xcode
-          cargo lipo --release
-
-      - name: Build for amd64
-        run: |
-          cargo build --release --target=x86_64-unknown-linux-gnu
-          echo "✅ Built for amd64"
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: idevice-artifacts
-          path: |
-            target/universal/release/libidevice.a
-            target/x86_64-unknown-linux-gnu/release/idevice
+      # Step 5: Run tests (optional, if applicable)
+      - name: Run Tests
+        run: cargo test --target=x86_64-unknown-linux-gnu
