@@ -42,10 +42,11 @@ jobs:
           echo "PKG_CONFIG_PATH=/usr/local/opt/libimobiledevice/lib/pkgconfig:/usr/local/opt/libplist/lib/pkgconfig:/usr/local/opt/libusbmuxd/lib/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
           echo "✅ Environment variables set"
 
-      - name: Install cargo-lipo and cargo-xcode
+      - name: Install Rust build tools
         run: |
           cargo install cargo-lipo
           cargo install cargo-xcode
+          cargo install --force --locked bindgen-cli
           echo "✅ Installed Rust build tools"
 
       - name: Build for iOS
