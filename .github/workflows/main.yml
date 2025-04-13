@@ -1,4 +1,4 @@
-name: Build idevice for iOS and amd64
+name: Build and Deploy idevice for iOS and amd64
 
 on:
   push:
@@ -11,17 +11,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
     steps:
       # Step 1: Check out the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Step 2: Install required dependencies
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-multilib g++-multilib x86_64-linux-gnu-gcc
+      # Step 2: Cache dependencies to speed up builds
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/bin
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       # Step 3: Set up Rust toolchain
       - name: Set Up Rust Toolchain
@@ -31,10 +40,41 @@ jobs:
           toolchain: stable
           override: true
 
-      # Step 4: Build the project for amd64 target
-      - name: Build Project
-        run: cargo build --release --target=x86_64-unknown-linux-gnu
+      # Step 4: Install Rust target for compatibility
+      - name: Install Rust Target Dependencies
+        run: rustup target add ${{ matrix.target }}
 
-      # Step 5: Run tests (optional, if applicable)
+      # Step 5: Build the project
+      - name: Build Project
+        run: cargo build --release --target=${{ matrix.target }}
+
+      # Step 6: Run tests
       - name: Run Tests
-        run: cargo test --target=x86_64-unknown-linux-gnu
+        run: cargo test --target=${{ matrix.target }}
+
+      # Step 7: Upload build artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Download build artifacts
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts-x86_64-unknown-linux-gnu
+
+      # Step 3: Deploy the application
+      - name: Deploy Application
+        run: |
+          echo "Deploying the application..."
+          # Add deployment commands here, e.g., scp, rsync, or cloud provider CLI commands
