@@ -1,4 +1,4 @@
-name: Build idevice for iOS
+name: Build idevice for iOS and amd64
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    name: Build for iOS
+    name: Build for iOS and amd64
     runs-on: macos-latest
 
     steps:
@@ -20,7 +20,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios
+          targets: aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios, x86_64-unknown-linux-gnu
 
       - name: Install dependencies
         run: |
@@ -53,8 +53,15 @@ jobs:
           cargo xcode
           cargo lipo --release
 
-      - name: Upload artifact
+      - name: Build for amd64
+        run: |
+          cargo build --release --target=x86_64-unknown-linux-gnu
+          echo "✅ Built for amd64"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: idevice-ios
-          path: target/universal/release/libidevice.a
+          name: idevice-artifacts
+          path: |
+            target/universal/release/libidevice.a
+            target/x86_64-unknown-linux-gnu/release/idevice
